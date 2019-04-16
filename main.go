@@ -18,7 +18,7 @@ func main() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	if err := run(paths, opt.importPaths); err != nil {
+	if err := run(paths, opt.importPaths, opt.packagePath, opt.projectName); err != nil {
 		fmt.Fprintf(os.Stderr, "%+v", err)
 		os.Exit(1)
 
@@ -26,7 +26,7 @@ func main() {
 
 }
 
-func run(files []string, importPaths []string) error {
+func run(files []string, importPaths []string, packagePath, projectName string) error {
 	p := protoparse.Parser{
 		ImportPaths: importPaths,
 	}
@@ -42,7 +42,7 @@ func run(files []string, importPaths []string) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	g, err := dart.Build(apiParams, "ready-stockings", "/proto/")
+	g, err := dart.Build(apiParams, projectName, packagePath)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}

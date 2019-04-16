@@ -3,6 +3,7 @@ package dart
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"golang.org/x/xerrors"
@@ -78,10 +79,14 @@ func WriteImports(g *GenerateDart, apiParams []*APIParam, project, path string) 
 		return xerrors.Errorf(": %w", err)
 	}
 
+	//TODO ここはちゃんと関数に分けて切り出す
+	dartProject := strings.ReplaceAll(project, "-", "_")
 	files := FileNames(apiParams)
 	for i := range files {
 		file := files[i]
-		if _, err := fmt.Fprintf(g.File, "import 'package:%s%s%s.dart';\n", project, path, file); err != nil {
+		sliceFile := strings.Split(file, "/")
+		dartFile := strings.ReplaceAll(sliceFile[len(sliceFile)-1], "proto", "pb")
+		if _, err := fmt.Fprintf(g.File, "import 'package:%s%s%s.dart';\n", dartProject, path, dartFile); err != nil {
 			return xerrors.Errorf(": %w", err)
 		}
 	}
@@ -89,8 +94,52 @@ func WriteImports(g *GenerateDart, apiParams []*APIParam, project, path string) 
 	return nil
 }
 
+//https://github.com/iancoleman/strcase
+
+var numberSequence = regexp.MustCompile(`([a-zA-Z])(\d+)([a-zA-Z]?)`)
+var numberReplacement = []byte(`$1 $2 $3`)
+
+func addWordBoundariesToNumbers(s string) string {
+	b := []byte(s)
+	b = numberSequence.ReplaceAll(b, numberReplacement)
+	return string(b)
+}
+
+func toCamelInitCase(s string, initCase bool) string {
+	s = addWordBoundariesToNumbers(s)
+	s = strings.Trim(s, " ")
+	n := ""
+	capNext := initCase
+	for _, v := range s {
+		if v >= 'A' && v <= 'Z' {
+			n += string(v)
+		}
+		if v >= '0' && v <= '9' {
+			n += string(v)
+		}
+		if v >= 'a' && v <= 'z' {
+			if capNext {
+				n += strings.ToUpper(string(v))
+			} else {
+				n += string(v)
+			}
+		}
+		if v == '_' || v == ' ' || v == '-' {
+			capNext = true
+		} else {
+			capNext = false
+		}
+	}
+	return n
+}
+
+func toCamel(s string) string {
+	return toCamelInitCase(s, true)
+}
+
 func WriteClass(g *GenerateDart, apiParams []*APIParam, project string) error {
-	_, err := fmt.Fprintf(g.File, "class %sClient {\n", project)
+	camelProject := toCamel(project)
+	_, err := fmt.Fprintf(g.File, "class %sClient {\n", camelProject)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}
@@ -100,7 +149,7 @@ func WriteClass(g *GenerateDart, apiParams []*APIParam, project string) error {
 		return xerrors.Errorf(": %w", err)
 	}
 
-	_, err = fmt.Fprintf(g.File, "\t%sClient(String baseUrl) { this.baseUrl = baseUrl}\n", project)
+	_, err = fmt.Fprintf(g.File, "\t%sClient(String baseUrl) {this.baseUrl = baseUrl;}\n", camelProject)
 	if err != nil {
 		return xerrors.Errorf(": %w", err)
 	}

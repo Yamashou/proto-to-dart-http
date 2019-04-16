@@ -14,6 +14,7 @@ type Option struct {
 	importPaths []string
 	projectName string
 	outPutPass  string
+	packagePath string
 }
 
 func parseOption() (*Option, []string, error) {
@@ -30,7 +31,8 @@ Options\n`, os.Args[0], os.Args[0])
 	}
 
 	projectName := flag.String("p", "", `project name`)
-	outPutPass := flag.String("o", "", `project name`)
+	outPutPass := flag.String("o", "", `out put pass`)
+	packagePath := flag.String("pp", "/", `project name`)
 	protoImportOpt := flag.String("i", dir, `pb files import directory`)
 	flag.Parse()
 
@@ -43,10 +45,22 @@ Options\n`, os.Args[0], os.Args[0])
 		protoImportPaths[i] = protoImportPath
 	}
 
+	path := *packagePath
+	if *packagePath != "/" {
+		if path[0] != '/' {
+			path = "/" + path
+		}
+		last := path[len(path)-1]
+		if last != '/' {
+			path += "/"
+		}
+	}
+
 	return &Option{
 		importPaths: protoImportPaths,
 		projectName: *projectName,
 		outPutPass:  *outPutPass,
+		packagePath: path,
 	}, flag.Args(), nil
 }
 func (o *Option) ImportRootPath() string {
