@@ -160,7 +160,7 @@ func WriteClass(g *GenerateDart, apiParams []*APIParam, project string) error {
 			"\tFuture<%s> %c%s(%s body, Map<String, String> headers) async {\n"+
 				"\t\tfinal response = await http.%s(\n"+
 				"\t\t\tthis.baseUrl + \"%s\",\n"+
-				"\t\t\tbody: body,\n"+
+				"\t\t\tbody: body.writeToBuffer(),\n"+
 				"\t\t\theaders: headers);\n\n"+
 				"\t\tfinal %s res = %s.fromBuffer(response.bodyBytes);\n"+
 				"\t\treturn res;\n\t}\n\n",
