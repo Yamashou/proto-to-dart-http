@@ -64,8 +64,9 @@ type GenerateDart struct {
 	File *os.File
 }
 
-func NewGenerateDart() (*GenerateDart, error) {
-	file, err := os.OpenFile("test.pb.dart", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+func NewGenerateDart(name string) (*GenerateDart, error) {
+	fName := ProjectFileName(name)
+	file, err := os.OpenFile(fmt.Sprintf("%s.pb.dart", fName), os.O_RDWR|os.O_CREATE, 0664)
 	if err != nil {
 		return nil, xerrors.Errorf("failed to get absolute path: %w", err)
 	}
@@ -79,8 +80,7 @@ func WriteImports(g *GenerateDart, apiParams []*APIParam, project, path string) 
 		return xerrors.Errorf(": %w", err)
 	}
 
-	//TODO ここはちゃんと関数に分けて切り出す
-	dartProject := strings.ReplaceAll(project, "-", "_")
+	dartProject := ProjectFileName(project)
 	files := FileNames(apiParams)
 	for i := range files {
 		file := files[i]
@@ -187,7 +187,7 @@ func WriteClass(g *GenerateDart, apiParams []*APIParam, project string) error {
 }
 
 func Build(apiParams []*APIParam, project, path string) (*GenerateDart, error) {
-	g, err := NewGenerateDart()
+	g, err := NewGenerateDart(project)
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
@@ -201,4 +201,8 @@ func Build(apiParams []*APIParam, project, path string) (*GenerateDart, error) {
 	}
 
 	return g, nil
+}
+
+func ProjectFileName(name string) string {
+	return strings.ReplaceAll(name, "-", "_")
 }
