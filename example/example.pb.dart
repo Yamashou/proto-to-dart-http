@@ -1,5 +1,5 @@
 import 'package:http/http.dart' as http;
-import 'package:example/proto/v1/test.pb.dart';
+import 'package:example/proto/v1/example.pb.dart';
 class ExampleClient {
 	String baseUrl;
 	ExampleClient(String baseUrl) {this.baseUrl = baseUrl;}

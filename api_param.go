@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/Yamashou/proto-to-dart-http/dart"
-	pbdesc "github.com/Yamashou/proto-to-dart-http/pbdsec"
 	"github.com/golang/protobuf/proto"
 	"github.com/jhump/protoreflect/desc"
 	"golang.org/x/xerrors"
@@ -10,13 +9,10 @@ import (
 )
 
 type apiParamsBuilder struct {
-	pbdesc *pbdesc.ProtoDescriptor
 }
 
 func NewAPIParamsBuilder() *apiParamsBuilder {
-	return &apiParamsBuilder{
-		pbdesc: &pbdesc.ProtoDescriptor{},
-	}
+	return &apiParamsBuilder{}
 }
 
 func (a *apiParamsBuilder) Build(fds []*desc.FileDescriptor) ([]*dart.APIParam, error) {
@@ -98,21 +94,6 @@ func (a *apiParamsBuilder) apiParamByHTTPRule(rule *annotations.HttpRule, inputT
 	if err != nil {
 		return nil, xerrors.Errorf(": %w", err)
 	}
-
-	bodyMsgType, err := a.pbdesc.BodyMsgTypeNameByHTTPRule(inputType, rule)
-	bodyNotFound := xerrors.Is(err, pbdesc.ErrBodyNotFound)
-	if err != nil && !bodyNotFound {
-		return nil, xerrors.Errorf(": %w", err)
-	}
-
-	var jsonBody string
-	if !bodyNotFound {
-		jsonBody, err = a.pbdesc.JSONBody(bodyMsgType)
-		if err != nil {
-			return nil, xerrors.Errorf(": %w", err)
-		}
-	}
-
 	request := dart.Request{
 		Name:     inputType.GetName(),
 		FileName: inputType.GetFile().GetName(),
@@ -126,7 +107,6 @@ func (a *apiParamsBuilder) apiParamByHTTPRule(rule *annotations.HttpRule, inputT
 	return &dart.APIParam{
 		HTTPMethod: endpoint.method,
 		Path:       endpoint.path,
-		Body:       jsonBody,
 		APIName:    name,
 		Request:    request,
 		Response:   response,
